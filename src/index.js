@@ -1,6 +1,7 @@
 // require('dotenv').config({path : './env'})
-import dotenv from "dotenv"
+import dotenv from "dotenv"  // improved version , experimental feature -> need to include in package.json
 import connectDB from "./db/index.js"
+import app from "./app.js"
 
 dotenv.config({
     path:'./env'

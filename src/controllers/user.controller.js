@@ -179,8 +179,8 @@ const refreshAccessToken = asyncHandler(async(req , res) => {
             throw new ApiError(401 , "Refresh token is expired or used")
         }
     
-        const {accessToken , newrefreshToken} = await generateAccessAndRefreshTokens(user._id)
-    
+        const {accessToken , refreshToken} = await generateAccessAndRefreshTokens(user._id)
+
         const options = {
             httpOnly : true,
             secure : true
@@ -189,13 +189,13 @@ const refreshAccessToken = asyncHandler(async(req , res) => {
         return res
         .status(200)
         .cookie("accessToken" , accessToken , options)
-        .cookie("refreshToken" , newrefreshToken , options)
+        .cookie("refreshToken" , refreshToken , options)
         .json(
             new ApiResponse(
                 200 ,
                 {
                     accessToken ,
-                    refreshToken : newrefreshToken
+                    refreshToken : refreshToken
                 },
                 "Access token refreshed"
             )
@@ -284,8 +284,8 @@ const updateUserAvatar = asyncHandler(async(req , res) => {
         },
         {
             new : true
-        }.select("-password")
-    )
+        }
+    ).select("-password")
 
     return res.status(200)
     .json(
@@ -316,8 +316,9 @@ const updateUserCoverImage = asyncHandler(async(req , res) => {
         },
         {
             new : true
-        }.select("-password")
-    )
+        }
+    ).select("-password")
+    
     return res.status(200)
     .json(
         new ApiResponse(200 , user , "Cover Image updated successfully")

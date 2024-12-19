@@ -10,64 +10,61 @@ import {uploadOnCloudinary} from "../utils/cloudinary.js"
 const getAllVideos = asyncHandler(async (req, res) => {
     const { page = 1, limit = 10, query, sortBy, sortType, userId } = req.query
     //TODO: get all videos based on query, sort, pagination
+    
 })
 
 const publishAVideo = asyncHandler(async (req, res) => {
     const { title, description} = req.body
     // get video, upload to cloudinary, create video
 
-    try {
-        if (!title || !description){
-            throw new ApiError(400 , "title and description are required")
-        }
-    
-        const user = await User.findById(req.user?._id)
-        if (!user){
-            throw new ApiError(500 , "Internal Server Error while fetching user")
-        }
-    
-        const videoFileLocalPath = req.files?.videoFile[0]?.path;
-        if (!videoFileLocalPath){
-            throw new ApiError(400 , "videoFile is required")
-        }
-    
-        const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
-        if (!thumbnailLocalPath){
-            throw new ApiError(400 , "thumbnail is required")
-        }
-    
-        const videoFile = await uploadOnCloudinary(videoFileLocalPath)
-        if (!videoFile){
-            throw new ApiError(500 , "Internal Server Error , Error while uploading videoFile to the Cloudinary")
-        }
-    
-        const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
-        if (!thumbnail){
-            throw new ApiError(500 , "Internal Server Error , Error while uploading thumbnail to the Cloudinary")
-        }
-    
-        const video = await Video.create({
-            videoFile : videoFile.url,
-            thumbnail : thumbnail.url,
-            owner : user._id,
-            title,
-            description,
-            duration : videoFile.duration,
-            views : 0,
-            isPublished : true,
-        })
-    
-        if (!video){
-            throw new ApiError(500 , "Internal Server Error while Publishing Video")
-        }
-        
-        return res.status(200)
-        .json(
-            new ApiResponse(200 , video , "Video Published Successfully")
-        )
-    } catch (error) {
-        throw new ApiError(500 , "Internal Server Error")
+    if (!title || !description){
+        throw new ApiError(400 , "title and description are required")
     }
+
+    const user = await User.findById(req.user?._id)
+    if (!user){
+        throw new ApiError(500 , "Internal Server Error while fetching user")
+    }
+
+    const videoFileLocalPath = req.files?.videoFile?.[0]?.path;
+    if (!videoFileLocalPath){
+        throw new ApiError(400 , "videoFile is required")
+    }
+
+    const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
+    if (!thumbnailLocalPath){
+        throw new ApiError(400 , "thumbnail is required")
+    }
+
+    const videoFile = await uploadOnCloudinary(videoFileLocalPath)
+    if (!videoFile){
+        throw new ApiError(500 , "Internal Server Error , Error while uploading videoFile to the Cloudinary")
+    }
+
+    const thumbnail = await uploadOnCloudinary(thumbnailLocalPath)
+    if (!thumbnail){
+        throw new ApiError(500 , "Internal Server Error , Error while uploading thumbnail to the Cloudinary")
+    }
+
+    const video = await Video.create({
+        videoFile : videoFile.url,
+        thumbnail : thumbnail.url,
+        owner : user._id,
+        title,
+        description,
+        duration : videoFile.duration,
+        views : 0,
+        isPublished : true,
+    })
+
+    if (!video){
+        throw new ApiError(500 , "Internal Server Error while Publishing Video")
+    }
+    
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , video , "Video Published Successfully")
+    )
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
@@ -83,7 +80,7 @@ const getVideoById = asyncHandler(async (req, res) => {
     const video = await Video.findById(videoId)
 
     if (!video){
-        throw new ApiError(500 , "Internal Server Error")
+        throw new ApiError(400 , "this video does not exists")
     }
 
     return res.status(200)
@@ -158,11 +155,73 @@ const updateVideo = asyncHandler(async (req, res) => {
 
 const deleteVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
-    //TODO: delete video
+    // delete video
+    if (!videoId){
+        throw new ApiError(400 , "videoId is required")
+    }
+
+    const isvalid = isValidObjectId(videoId)
+    if (!isvalid){
+        throw new ApiError(400 , "videoId is Invalid")
+    }
+
+    const video = await Video.findById(videoId)
+    if (!video){
+        throw new ApiError(500 , "this video does not exists")
+    }
+
+    if (!(video.owner).equals(req.user?._id)){
+        throw new ApiError(400 , "You cannot delete this video as you are not owner of this video")
+    }
+
+    const deletedVideo = await Video.findByIdAndDelete(videoId)
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200,
+            deletedVideo ,
+            "video deleted successfully"
+        )
+    )
 })
 
 const togglePublishStatus = asyncHandler(async (req, res) => {
     const { videoId } = req.params
+    if (!videoId){
+        throw new ApiError(400 , "videoId is required")
+    }
+
+    const isvalid = isValidObjectId(videoId)
+    if (!isvalid){
+        throw new ApiError(400 , "videoId is Invalid")
+    }
+
+    const video = await Video.findById(videoId)
+    if (!video){
+        throw new ApiError(400 , "this video does not exists")
+    }
+
+    if (!(video.owner).equals(req.user?._id)){
+        throw new ApiError(404 , "You cannot update this video as you are not owner of this video")
+    }
+
+    const changedvideo = await Video.findByIdAndUpdate(
+        videoId,
+        {
+            $set : {
+                isPublished : !video.isPublished
+            }
+        },
+        {
+            new : true
+        }
+    )
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , changedvideo , "IsPublished Toggled successfully")
+    )
+
 })
 
 export {

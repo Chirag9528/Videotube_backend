@@ -145,15 +145,16 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                     {
                         $lookup : {
                             from : "users",
-                            localField : "owner",
+                            localField : "owner", // will respect to videos
                             foreignField : "_id",
                             as : "videoowner"
                         }
                     },
                     {
                         $addFields: {
+                            // adding field to getvideos
                             author : {
-                                $first : "$videoowner.username"
+                                $first : "$videoowner.username" // extracting first element from username array
                             },
                             authorfullname : {
                                 $first : "$videoowner.fullName"
@@ -177,6 +178,7 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         },
         {
             $project : {
+                // need these fields only
                 tit : 1 ,
                 desc : 1 ,
                 vId : 1,

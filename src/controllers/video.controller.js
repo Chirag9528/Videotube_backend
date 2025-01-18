@@ -42,7 +42,8 @@ const getAll = asyncHandler(async (req, res) => {
                 createdBy: {
                     username : 1,
                     fullName : 1,
-                    avatar : 1
+                    avatar : 1,
+                    _id : 1
                 }
             }
         },
@@ -105,7 +106,8 @@ const getAllVideos = asyncHandler(async (req, res) => {
                 createdBy: {
                     username : 1,
                     fullName : 1,
-                    avatar : 1
+                    avatar : 1,
+                    _id : 1
                 }
             }
         },

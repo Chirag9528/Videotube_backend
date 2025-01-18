@@ -5,6 +5,37 @@ import {ApiError} from "../utils/ApiError.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import {asyncHandler} from "../utils/asyncHandler.js"
 
+const checkSubscription = asyncHandler(async (req , res) => {
+    const {channelId} = req.params
+
+    const isvalid = isValidObjectId(channelId)
+    if (!isvalid){
+        throw new ApiError(400 , "Invalid channelId")
+    }
+
+    const isSubscribed = await Subscription.findOne(
+        {subscriber : req.user?._id , channel : channelId}
+    )
+
+    if (isSubscribed){
+        return res.status(200)
+        .json(
+            new ApiResponse(200 ,
+                true,
+                "You have subscribed this channel"
+            )
+        )
+    }
+
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , 
+            false ,
+            "You haven't subscibed this channel"
+        )
+    )
+
+})
 
 const toggleSubscription = asyncHandler(async (req, res) => {
     const {channelId} = req.params
@@ -123,5 +154,6 @@ const getSubscribedChannels = asyncHandler(async (req, res) => {
 export {
     toggleSubscription,
     getUserChannelSubscribers,
-    getSubscribedChannels
+    getSubscribedChannels,
+    checkSubscription
     }

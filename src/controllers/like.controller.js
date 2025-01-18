@@ -7,6 +7,29 @@ import {asyncHandler} from "../utils/asyncHandler.js"
 import { Comment } from "../models/comment.model.js"
 import { Tweet } from "../models/tweet.model.js"
 
+const checkVideoLike = asyncHandler(async (req , res) => {
+    const {videoId} = req.params
+    const isValid = isValidObjectId(videoId)
+    if (!isValid){
+        throw new ApiError(400 , "Invalid videoId")
+    }
+    const video = await Video.findById(videoId)
+    if (!video){
+        throw new ApiError(400 , "Invalid videoId")
+    }
+    const findlike = await Like.findOne({video : videoId , likedBy : req.user?._id})
+    if (findlike){
+        return res.status(200)
+        .json(
+            new ApiResponse(200 , true , "You have liked this video")
+        )
+    }
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , false , "You haven't liked this video")
+    )
+})
+
 const toggleVideoLike = asyncHandler(async (req, res) => {
     const {videoId} = req.params
     // toggle like on video
@@ -45,6 +68,29 @@ const toggleVideoLike = asyncHandler(async (req, res) => {
         new ApiResponse(200 , liked , "video liked successfully")
     )
 
+})
+
+const checkCommentLike = asyncHandler(async (req , res) => {
+    const {commentId} = req.params
+    const isValid = isValidObjectId(commentId)
+    if (!isValid){
+        throw new ApiError(400 , "Invalid commentId")
+    }
+    const comment = await Comment.findById(commentId)
+    if (!comment){
+        throw new ApiError(400 , "Invalid commentId")
+    }
+    const findlike = await Like.findOne({comment : commentId , likedBy : req.user?._id})
+    if (findlike){
+        return res.status(200)
+        .json(
+            new ApiResponse(200 , true , "You have liked this comment")
+        )
+    }
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , false , "You haven't liked this comment")
+    )
 })
 
 const toggleCommentLike = asyncHandler(async (req, res) => {
@@ -201,5 +247,7 @@ export {
     toggleCommentLike,
     toggleTweetLike,
     toggleVideoLike,
-    getLikedVideos
+    getLikedVideos,
+    checkVideoLike,
+    checkCommentLike
     }

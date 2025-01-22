@@ -30,29 +30,18 @@ const createPlaylist = asyncHandler(async (req, res) => {
 })
 
 const getUserPlaylists = asyncHandler(async (req, res) => {
-    const {userId} = req.params
-    // get user playlists
-    const isValid = isValidObjectId(userId)
-    if (!isValid){
-        throw new ApiError(400 , "Invalid userId")
-    }
-    
-    const user = await User.findById(userId)
-    if (!user){
-        throw new ApiError(400 , "Invalid userId")
-    }
-
     const playlists = await Playlist.aggregate([
         {
             $match : {
-                owner : new mongoose.Types.ObjectId(userId)
+                owner : req.user?._id
             }
         },
         {
             $project : {
                 _id : 1,
                 name : 1,
-                description : 1
+                description : 1,
+                videos : 1
             }
         }
     ])

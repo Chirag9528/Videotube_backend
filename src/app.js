@@ -6,7 +6,7 @@ const app = express()
 app.use(cors(
     {
         origin : process.env.CORS_ORIGIN,
-        credentials : true
+        credentials : true // will allow to send and receive cookies to cross origin
     }
 ))
 

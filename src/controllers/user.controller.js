@@ -114,8 +114,10 @@ const loginUser = asyncHandler(async (req , res) => {
 
     const options = { // backend can edit cookie only
         httpOnly: true,
-        secure: true
+        secure: true,
+        sameSite: "None"      // required for cross origin cookies
     }
+    
 
     return res
     .status(200)
@@ -140,7 +142,8 @@ const logoutUser = asyncHandler(async(req , res) => {
         req.user._id ,
         {
             $unset : {
-                refreshToken : 1 // this will remove the field from the document
+                refreshToken : 1, // this will remove the field from the document
+                accessToken : 1
             }
         },
         {
@@ -159,6 +162,21 @@ const logoutUser = asyncHandler(async(req , res) => {
     .json(new ApiResponse(200 , {} , "User Logged Out"))
 
 }) 
+
+const verifyAccessToken = asyncHandler(async(req , res) => {
+    if (req.user){
+        return res
+        .status(200)
+        .json(new ApiResponse(200 , {
+            user : req.user
+        } , "AccessToken is valid"))
+    }
+    return res
+    .status(401)
+    .json(
+        new ApiResponse(401 , {} , "AccessToken is not Valid")
+    )
+})
 
 const refreshAccessToken = asyncHandler(async(req , res) => {
     const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
@@ -468,5 +486,6 @@ export {
     updateUserAvatar,
     updateUserCoverImage,
     getUserChannelProfile,
-    getWatchHistory
+    getWatchHistory,
+    verifyAccessToken
 }

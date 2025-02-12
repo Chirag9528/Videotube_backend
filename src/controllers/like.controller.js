@@ -202,8 +202,8 @@ const getLikedVideos = asyncHandler(async (req, res) => {
                             author : {
                                 $first : "$videoowner.username" // extracting first element from username array
                             },
-                            authorfullname : {
-                                $first : "$videoowner.fullName"
+                            avatar : {
+                                $first : "$videoowner.avatar"
                             }
                         }
                     }
@@ -215,21 +215,32 @@ const getLikedVideos = asyncHandler(async (req, res) => {
         },
         {
             $addFields : {
-                tit : "$getvideo.title",
-                desc : "$getvideo.description",
-                vId : "$getvideo.videoFile",
-                uname : "$getvideo.author",
-                fName : "$getvideo.authorfullname"
+                videoid : "$getvideo._id",
+                title : "$getvideo.title",
+                description : "$getvideo.description",
+                videoFile : "$getvideo.videoFile",
+                thumbnail : "$getvideo.thumbnail",
+                ownername : "$getvideo.author",
+                avatar : "$getvideo.avatar",
+                owner : "$getvideo.owner",
+                views : "$getvideo.views",
+                isPublished : "$getvideo.isPublished",
             }
         },
         {
             $project : {
                 // need these fields only
-                tit : 1 ,
-                desc : 1 ,
-                vId : 1,
-                uname : 1,
-                fName : 1
+                _id : 1 ,
+                videoid : 1,
+                title : 1 ,
+                description : 1 ,
+                videoFile : 1,
+                thumbnail : 1,
+                ownername : 1,
+                owner : 1,
+                avatar : 1,
+                views : 1,
+                isPublished : 1
             }
         }
     ])

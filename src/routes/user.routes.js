@@ -10,7 +10,8 @@ import {
     updateUserAvatar, 
     updateUserCoverImage, 
     getUserChannelProfile, 
-    getWatchHistory} from "../controllers/user.controller.js";
+    getWatchHistory,
+    verifyAccessToken} from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
@@ -42,5 +43,7 @@ router.route("/cover-image").patch(verifyJWT , upload.single("coverImage") , upd
 
 router.route("/c/:username").get(verifyJWT , getUserChannelProfile) // we are taking username from url
 router.route("/history").get(verifyJWT , getWatchHistory)
+
+router.route("/verifytoken").get(verifyJWT , verifyAccessToken)
 
 export default router

@@ -384,6 +384,39 @@ const togglePublishStatus = asyncHandler(async (req, res) => {
     .json(
         new ApiResponse(200 , changedvideo , "IsPublished Toggled successfully")
     )
+})
+
+const updateviews = asyncHandler(async (req , res)=>{
+    const {videoId} = req.params
+    if (!videoId){
+        throw new ApiError(400 , "videoId is required")
+    }
+
+    const isvalid = isValidObjectId(videoId)
+    if (!isvalid){
+        throw new ApiError(400 , "videoId is Invalid")
+    }
+
+    const video = await Video.findById(videoId)
+    if (!video){
+        throw new ApiError(400 , "this video does not exists")
+    }
+
+    const videoafterupdate = await Video.findByIdAndUpdate(
+        videoId , 
+        {
+            $set : {
+                views : video.views+1
+            }
+        },
+        {
+            new : true
+        }
+    )
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , videoafterupdate , "Views updated successfully")
+    )
 
 })
 
@@ -394,5 +427,6 @@ export {
     getVideoById,
     updateVideo,
     deleteVideo,
-    togglePublishStatus
+    togglePublishStatus,
+    updateviews
     }

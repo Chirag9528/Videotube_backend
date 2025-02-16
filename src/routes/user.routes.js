@@ -11,7 +11,8 @@ import {
     updateUserCoverImage, 
     getUserChannelProfile, 
     getWatchHistory,
-    verifyAccessToken} from "../controllers/user.controller.js";
+    verifyAccessToken,
+    updateWatchHistory} from "../controllers/user.controller.js";
 import {upload} from "../middlewares/multer.middleware.js"
 import { verifyJWT } from "../middlewares/auth.middleware.js";
 const router = Router()
@@ -45,5 +46,7 @@ router.route("/c/:username").get(verifyJWT , getUserChannelProfile) // we are ta
 router.route("/history").get(verifyJWT , getWatchHistory)
 
 router.route("/verifytoken").get(verifyJWT , verifyAccessToken)
+
+router.route("/update-watchHistory/:videoId").get(verifyJWT , updateWatchHistory)
 
 export default router

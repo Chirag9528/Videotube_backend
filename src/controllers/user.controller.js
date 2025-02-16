@@ -4,7 +4,8 @@ import {User} from "../models/user.model.js"
 import {uploadOnCloudinary} from "../utils/cloudinary.js"
 import {ApiResponse} from "../utils/ApiResponse.js"
 import jwt from "jsonwebtoken"
-import mongoose from "mongoose"
+import mongoose, { isValidObjectId } from "mongoose"
+import { Video } from "../models/video.model.js"
 
 const generateAccessAndRefreshTokens = async(userId) => {
     try {
@@ -387,10 +388,9 @@ const getUserChannelProfile = asyncHandler(async(req , res) => {
                     },
                     isSubscribed : {
                         $cond : {
-                            if : {$in: [req.user?._id , "$subscribers.subscriber"]},
+                            if : {$in: [new mongoose.Types.ObjectId(req.user?._id) , "$subscribers.subscriber"]},
                             then : true,
                             else : false
-
                         }
                     }
                 }
@@ -422,7 +422,7 @@ const getUserChannelProfile = asyncHandler(async(req , res) => {
 })
 
 const getWatchHistory = asyncHandler(async(req , res) => {
-    const user = await User.aggregate([
+    const watchHistoryList = await User.aggregate([
         {
             $match : {
                 // req.user_id gives us a string so we use mongoose to get mongodb Id of objects
@@ -434,33 +434,63 @@ const getWatchHistory = asyncHandler(async(req , res) => {
                 from : "videos",
                 localField : "watchHistory",
                 foreignField : "_id",
-                as : "watchHistory",
+                as : "videodetails",
                 pipeline : [
                     {
                         $lookup : {
-                            from : "users",
-                            localField : "owner",
+                            from: "users",
+                            localField: "owner",
                             foreignField : "_id",
-                            as : "owner",
-                            pipeline : [
-                                {
-                                    $project : {
-                                        fullName : 1,
-                                        username : 1,
-                                        avatar : 1
-                                    }
-                                }
-                            ]
+                            as: "ownerdetails"
                         }
                     },
                     {
                         $addFields : {
                             owner : {
-                                $first : "$owner"
-                            }
+                                $first : "$ownerdetails._id"
+                                },
+                            ownername : {
+                                $first: "$ownerdetails.username"
+                                },
+                            avatar : { 
+                                $first : "$ownerdetails.avatar"
+                                }
                         }
                     }
                 ]
+            }
+        },
+        {
+            $unwind : "$videodetails"
+        },
+        {
+            $addFields : {
+                _id : "$videodetails._id",
+                videoFile : "$videodetails.videoFile",
+                thumbnail : "$videodetails.thumbnail",
+                title : "$videodetails.title",
+                description : "$videodetails.description",
+                duration : "$videodetails.duration",
+                views: "$videodetails.views",
+                isPublished: "$videodetails.isPublished",
+                owner : "$videodetails.owner",
+                ownername : "$videodetails.ownername",
+                avatar : "$videodetails.avatar"
+            }
+        },
+        {
+            $project : {
+                _id : 1,
+                videoFile : 1,
+                thumbnail : 1,
+                title : 1,
+                description : 1,
+                duration : 1,
+                views : 1,
+                isPublished : 1,      
+                owner : 1,
+                ownername : 1,
+                avatar : 1
             }
         }
     ])
@@ -469,9 +499,47 @@ const getWatchHistory = asyncHandler(async(req , res) => {
     .json(
         new ApiResponse(
             200 , 
-            user[0].watchHistory,
+            watchHistoryList,
             "Watch history fetched successfully"
         )
+    )
+})
+
+const updateWatchHistory = asyncHandler(async (req , res)=>{
+    const {videoId} = req.params
+    if (!videoId){
+        throw new ApiError(400 , "videoId is required")
+    }
+
+    const isvalid = isValidObjectId(videoId)
+    if (!isvalid){
+        throw new ApiError(400 , "videoId is Invalid")
+    }
+    const video = await Video.findById(videoId)
+    if (!video){
+        throw new ApiError(400 , "this video does not exists")
+    }
+
+    const updateduser = await User.findByIdAndUpdate(
+        req.user?._id,
+        {
+            $addToSet : {
+                watchHistory : videoId
+            }
+        },
+        {
+            new : true
+        }
+    )
+    .select("-password")
+
+
+    if (!updateduser){
+        throw new ApiError(500 , 'Error while updating User\'s Watch History')
+    }
+    return res.status(200)
+    .json(
+        new ApiResponse(200 , updateduser , "Video added to watchhistory successfully")
     )
 })
 
@@ -487,5 +555,6 @@ export {
     updateUserCoverImage,
     getUserChannelProfile,
     getWatchHistory,
-    verifyAccessToken
+    verifyAccessToken,
+    updateWatchHistory
 }
